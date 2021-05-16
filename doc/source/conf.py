@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 #
+# SPDX-FileCopyrightText: 2013 Stefano Babic <sbabic@denx.de>
+#
+# SPDX-License-Identifier: GPL-2.0-only
+
 # SW Specifications build configuration file, created by
 # ReST Editor on Nov 13, 2012
 #
