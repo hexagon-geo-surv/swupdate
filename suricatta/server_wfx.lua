@@ -1111,7 +1111,7 @@ function M.job.definition:update(chan)
     chan = chan or M.channel.main
     M.utils.do_retry(math.huge, chan.options.retry_sleep, function()
         local res, _, data = chan.get {
-            url = ("%s/job/%s/definition"):format(chan.options.url, self.meta.id),
+            url = ("%s/jobs/%s/definition"):format(chan.options.url, self.meta.id),
         }
         if not res then
             suricatta.notify.warn("Got HTTP error code %d from server.", data.http_response_code)
