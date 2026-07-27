@@ -42,6 +42,7 @@ tests-$(CONFIG_LIBCONFIG) += $(if $(CONFIG_RAW), ValidImageTest)
 endif
 tests-y += InvOptsNoImg
 tests-$(CONFIG_WEBSERVER) += InvOptsCheckWithWeb
+tests-$(CONFIG_WEBSERVER) += WebserverTest
 tests-$(CONFIG_SURICATTA) += InvOptsCheckWithSur
 tests-$(CONFIG_SIGALG_CMS) += InvSigNameCheck
 tests-$(CONFIG_SIGALG_CMS) += ValidSigNameCheck
@@ -157,6 +158,16 @@ InvOptsNoImg: FORCE $(if $(CONFIG_SIGALG_CMS), $(obj)/cacert.pem)
 PHONY += InvOptsCheckWithWeb
 InvOptsCheckWithWeb: FORCE $(if $(CONFIG_SIGALG_CMS), $(obj)/cacert.pem)
 	$(call cmd,swu_check_inv_websrv)
+
+#
+# webserver integration test – exercises both mongoose and lws backends
+#
+quiet_cmd_websrv_test = RUN     $@
+      cmd_websrv_test = $(srctree)/scripts/acceptance-tests/test_webserver.sh ./swupdate
+
+PHONY += WebserverTest
+WebserverTest: FORCE
+	$(call cmd,websrv_test)
 
 #
 # invalid option test, suricatta with check
