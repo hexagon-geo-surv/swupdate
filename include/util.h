@@ -364,3 +364,7 @@ static inline bool is_enabled_or_disabled(const char *s) {
 static inline bool is_enabled(const char *s) {
 	return (!strcmp(s, "enabled"));
 }
+
+const char *get_status_string(unsigned int status);
+const char *get_source_string(unsigned int source);
+int         level_to_rfc_5424(int level);

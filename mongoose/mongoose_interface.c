@@ -304,46 +304,6 @@ static void mg_http_send_digest_auth_request(struct mg_connection *c, const char
 	c->is_draining = 1;
 }
 
-/*
- * These functions are for V2 of the protocol
- */
-#define enum_string(x)	[x] = #x
-static const char *get_status_string(unsigned int status)
-{
-	const char * const str[] = {
-		enum_string(IDLE),
-		enum_string(START),
-		enum_string(RUN),
-		enum_string(SUCCESS),
-		enum_string(FAILURE),
-		enum_string(DOWNLOAD),
-		enum_string(DONE),
-		enum_string(SUBPROCESS)
-	};
-
-	if (status >= ARRAY_SIZE(str))
-		return "UNKNOWN";
-
-	return str[status];
-}
-
-#define enum_source_string(x)	[SOURCE_##x] = #x
-static const char *get_source_string(unsigned int source)
-{
-	const char * const str[] = {
-		enum_source_string(UNKNOWN),
-		enum_source_string(WEBSERVER),
-		enum_source_string(SURICATTA),
-		enum_source_string(DOWNLOADER),
-		enum_source_string(LOCAL)
-	};
-
-	if (source >= ARRAY_SIZE(str))
-		return "UNKNOWN";
-
-	return str[source];
-}
-
 static void restart_handler(struct mg_connection *nc, void *ev_data)
 {
 	struct mg_http_message *hm = (struct mg_http_message *) ev_data;
@@ -361,22 +321,6 @@ static void restart_handler(struct mg_connection *nc, void *ev_data)
 	}
 
 	mg_http_reply(nc, 201, "", "%s", "Device will reboot now.\n");
-}
-
-static int level_to_rfc_5424(int level)
-{
-	switch(level) {
-		case ERRORLEVEL:
-			return 3;
-		case WARNLEVEL:
-			return 4;
-		case INFOLEVEL:
-			return 6;
-		case TRACELEVEL:
-		case DEBUGLEVEL:
-		default:
-			return 7;
-	}
 }
 
 static void broadcast(char *str)

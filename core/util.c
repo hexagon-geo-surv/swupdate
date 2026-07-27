@@ -1368,3 +1368,55 @@ bool is_filename_valid (const char *file_name)
 {
 	return file_name != NULL && file_name[0] != '/' && strstr(file_name, "../") == NULL;
 }
+#define ENUM_STRING(x)        [x] = #x
+const char *get_status_string(unsigned int status)
+{
+	static const char * const str[] = {
+		ENUM_STRING(IDLE),
+		ENUM_STRING(START),
+		ENUM_STRING(RUN),
+		ENUM_STRING(SUCCESS),
+		ENUM_STRING(FAILURE),
+		ENUM_STRING(DOWNLOAD),
+		ENUM_STRING(DONE),
+		ENUM_STRING(SUBPROCESS),
+	};
+
+	if (status >= ARRAY_SIZE(str))
+		return "UNKNOWN";
+
+	return str[status];
+}
+
+#define ENUM_SOURCE_STRING(x) [SOURCE_##x] = #x
+const char *get_source_string(unsigned int source)
+{
+	static const char * const str[] = {
+		ENUM_SOURCE_STRING(UNKNOWN),
+		ENUM_SOURCE_STRING(WEBSERVER),
+		ENUM_SOURCE_STRING(SURICATTA),
+		ENUM_SOURCE_STRING(DOWNLOADER),
+		ENUM_SOURCE_STRING(LOCAL),
+	};
+
+	if (source >= ARRAY_SIZE(str))
+		return "UNKNOWN";
+
+	return str[source];
+}
+
+int level_to_rfc_5424(int level)
+{
+	switch (level) {
+		case ERRORLEVEL:
+			return 3;
+		case WARNLEVEL:
+			return 4;
+		case INFOLEVEL:
+			return 6;
+		case TRACELEVEL:
+		case DEBUGLEVEL:
+		default:
+			return 7;
+	}
+}
