@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 #include <cmocka.h>
+#include "swupdate_status.h"
 #include "util.h"
 
 static int util_setup(void **state)
@@ -49,10 +50,73 @@ static void test_util_is_filename_valid(void **state)
 	assert_false(is_filename_valid("sub/../e.swu"));
 }
 
+static void test_status_known_values(void **state)
+{
+	(void)state;
+	assert_string_equal(get_status_string(IDLE),       "IDLE");
+	assert_string_equal(get_status_string(START),      "START");
+	assert_string_equal(get_status_string(RUN),        "RUN");
+	assert_string_equal(get_status_string(SUCCESS),    "SUCCESS");
+	assert_string_equal(get_status_string(FAILURE),    "FAILURE");
+	assert_string_equal(get_status_string(DOWNLOAD),   "DOWNLOAD");
+	assert_string_equal(get_status_string(DONE),       "DONE");
+	assert_string_equal(get_status_string(SUBPROCESS), "SUBPROCESS");
+}
+
+static void test_status_out_of_range(void **state)
+{
+	(void)state;
+	/* PROGRESS is intentionally absent from the string table */
+	assert_string_equal(get_status_string(PROGRESS), "UNKNOWN");
+	assert_string_equal(get_status_string(9999),      "UNKNOWN");
+}
+
+static void test_source_known_values(void **state)
+{
+	(void)state;
+	assert_string_equal(get_source_string(SOURCE_UNKNOWN),    "UNKNOWN");
+	assert_string_equal(get_source_string(SOURCE_WEBSERVER),  "WEBSERVER");
+	assert_string_equal(get_source_string(SOURCE_SURICATTA),  "SURICATTA");
+	assert_string_equal(get_source_string(SOURCE_DOWNLOADER), "DOWNLOADER");
+	assert_string_equal(get_source_string(SOURCE_LOCAL),      "LOCAL");
+}
+
+static void test_source_out_of_range(void **state)
+{
+	(void)state;
+	/* SOURCE_CHUNKS_DOWNLOADER is intentionally absent from the string table */
+	assert_string_equal(get_source_string(SOURCE_CHUNKS_DOWNLOADER), "UNKNOWN");
+	assert_string_equal(get_source_string(9999),                     "UNKNOWN");
+}
+
+static void test_level_known(void **state)
+{
+	(void)state;
+	assert_int_equal(level_to_rfc_5424(ERRORLEVEL), 3);
+	assert_int_equal(level_to_rfc_5424(WARNLEVEL), 4);
+	assert_int_equal(level_to_rfc_5424(INFOLEVEL), 6);
+	assert_int_equal(level_to_rfc_5424(TRACELEVEL), 7);
+	assert_int_equal(level_to_rfc_5424(DEBUGLEVEL), 7);
+}
+
+static void test_level_unknown(void **state)
+{
+	(void)state;
+	assert_int_equal(level_to_rfc_5424(OFF),  7);
+	assert_int_equal(level_to_rfc_5424(-1),   7);
+	assert_int_equal(level_to_rfc_5424(9999), 7);
+}
+
 int main(void)
 {
 	int error_count = 0;
 	const struct CMUnitTest util_tests[] = {
+	    cmocka_unit_test(test_level_known),
+	    cmocka_unit_test(test_level_unknown),
+	    cmocka_unit_test(test_source_known_values),
+	    cmocka_unit_test(test_source_out_of_range),
+	    cmocka_unit_test(test_status_known_values),
+	    cmocka_unit_test(test_status_out_of_range),
 	    cmocka_unit_test(test_util_ustrtoull),
 	    cmocka_unit_test(test_util_size_delimiter_match),
 	    cmocka_unit_test(test_util_is_filename_valid)
