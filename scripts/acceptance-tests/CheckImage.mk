@@ -41,7 +41,7 @@ ifeq ($(CONFIG_SIGNED_IMAGES),$(CONFIG_SIGALG_CMS))
 tests-$(CONFIG_LIBCONFIG) += $(if $(CONFIG_RAW), ValidImageTest)
 endif
 tests-y += InvOptsNoImg
-tests-$(CONFIG_MONGOOSE) += InvOptsCheckWithWeb
+tests-$(CONFIG_WEBSERVER) += InvOptsCheckWithWeb
 tests-$(CONFIG_SURICATTA) += InvOptsCheckWithSur
 tests-$(CONFIG_SIGALG_CMS) += InvSigNameCheck
 tests-$(CONFIG_SIGALG_CMS) += ValidSigNameCheck

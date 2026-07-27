@@ -674,6 +674,7 @@ Webserver command line parameters
 
 Example: ``swupdate -w "-r /www -p 8080"``
 
+Arguments only available with Mongoose are marked with '\#'.
 Mandatory arguments are marked with '\*':
 
 +-------------------------+----------+--------------------------------------------+
@@ -697,10 +698,10 @@ Mandatory arguments are marked with '\*':
 |                         |          | clients stops to send data. If hit, an     |
 |                         |          | update is aborted. Default=0 (unlimited)   |
 +-------------------------+----------+--------------------------------------------+
-| --auth-domain <string>  | string   | Set authentication domain                  |
+| --auth-domain <string>  | string   | \# Set authentication domain               |
 |                         |          | Default: none                              |
 +-------------------------+----------+--------------------------------------------+
-| --global-auth-file      | string   | Set authentication file if any             |
+| --global-auth-file      | string   | \# Set authentication file if any          |
 |  <string>               |          | Default: none                              |
 +-------------------------+----------+--------------------------------------------+
 

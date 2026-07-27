@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2026 Bastian Germann
+#
+# SPDX-License-Identifier: GPL-2.0-only
+
+config LWS
+	bool "libwebsockets"
+	depends on HAVE_LIBWEBSOCKETS
+	help
+	  Enable a webserver built on libwebsockets.
+
+	  Endpoints:
+	    POST /upload  - upload a SWU image
+	                    (multipart/form-data or application/octet-stream)
+	    POST /restart - trigger the post-update action
+	    GET  *        - static file serving from a configurable web root
+	                    (set via -r or the web-root config option)
+	    GET  (ws)     - WebSocket status stream
+	                    (same JSON protocol as the mongoose webserver)

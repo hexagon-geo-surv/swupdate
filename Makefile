@@ -374,7 +374,7 @@ include $(srctree)/Makefile.flags
 
 objs-y		:= core handlers bootloader suricatta
 objs-$(CONFIG_SWUPDATE_CRYPTO) += crypto
-libs-y		:= corelib mongoose parser fs containers
+libs-y		:= corelib mongoose lws parser fs containers
 bindings-y	:= bindings
 tools-y		:= tools
 

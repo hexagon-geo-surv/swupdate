@@ -1132,7 +1132,7 @@ int main(int argc, char **argv)
 	wait_threads_ready();
 
 	/* Start embedded web server */
-#if defined(CONFIG_MONGOOSE)
+#if defined(CONFIG_WEBSERVER)
 	if (opt_w) {
 		uid_t uid;
 		gid_t gid;

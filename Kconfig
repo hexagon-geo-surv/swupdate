@@ -399,7 +399,43 @@ config CHANNEL_CURL
 
 source "suricatta/Kconfig"
 
+menuconfig WEBSERVER
+	bool "Web Server"
+	help
+	  Enable update from remote using a web server on the target.
+
+if WEBSERVER
+choice
+	prompt "Web Server Type"
+	default MONGOOSE
+	help
+	  Choose the web server
+
 source "mongoose/Kconfig"
+
+source "lws/Kconfig"
+
+endchoice
+
+config MONGOOSEIPV6
+	bool "IPv6 support"
+	default y
+	help
+	  Enable IPv6 support in the web server.
+
+config MONGOOSESSL
+	bool "SSL support"
+	depends on SSL_IMPL_OPENSSL || SSL_IMPL_WOLFSSL || SSL_IMPL_MBEDTLS || LWS
+	help
+	  Enable TLS/SSL support in the web server.
+
+	  For the lws backend, TLS is handled by the TLS backend that libwebsockets
+	  was compiled against.
+
+comment "SSL support needs an SSL implementation"
+	depends on !SSL_IMPL_OPENSSL && !SSL_IMPL_WOLFSSL && !SSL_IMPL_MBEDTLS && !LWS
+
+endif
 
 comment "Security"
 

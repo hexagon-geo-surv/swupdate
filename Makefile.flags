@@ -301,6 +301,11 @@ ifneq ($(CONFIG_SWUFORWARDER_HANDLER),)
 LDLIBS += websockets uriparser
 endif
 
+# libwebsockets webserver
+ifneq ($(CONFIG_LWS),)
+LDLIBS += websockets
+endif
+
 # Delta Update
 ifneq ($(CONFIG_DELTA),)
 LDLIBS += zck

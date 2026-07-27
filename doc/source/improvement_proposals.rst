@@ -246,10 +246,6 @@ Webserver that allows streaming.
 Reported from ML there is this place for enhancement:
 
 - use Mongoose as library
-- use alternative Webserver. Civetweb is a fork from Mongoose and could be integrated.
-- Webserver itself is not doing a lot - it just provides API to push a SWU and Websocket to report progress.
-  If SWUpdate is behind a reverse-proxy, an easy own developed internal Webserver
-  can be a solution.
 
 * Status: Wait
 * Request for Support : Sponsor
