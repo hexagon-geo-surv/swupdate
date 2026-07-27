@@ -551,6 +551,8 @@ static void timer_ev_handler(void *fn_data)
  * Code common to V1 and V2
  */
 void mongoose_upload_ok_reply(struct mg_connection *nc,
+			      const struct mg_str *filename, size_t len);
+void mongoose_upload_ok_reply(struct mg_connection *nc,
 			      const struct mg_str *filename, size_t len)
 {
 	mg_http_reply(nc, 200,
