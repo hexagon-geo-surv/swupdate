@@ -85,6 +85,8 @@ struct swupdate_copy {
 	unsigned long long seek;
 	/* skip callback: only verify input */
 	int skip_file;
+	/* Check if the output has already the expected data */
+	int check_hash;
 	/* decompression to use */
 	enum compression_type compressed;
 	/* cpio crc checksum */

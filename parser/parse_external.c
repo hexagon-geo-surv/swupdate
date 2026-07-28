@@ -105,6 +105,12 @@ static void sw_set_install_if_higher(struct img_type *img, const char *value)
 	img->id.install_if_higher = 1;
 }
 
+static void sw_set_install_if_hash_different(struct img_type *img, const char *value)
+{
+	(void)value;
+	img->install_if_hash_different = 1;
+}
+
 static const struct stream_handler_entry handlers[] = {
 	{ "type", sw_set_type },
 	{ "filename", sw_set_filename },
@@ -125,6 +131,7 @@ static const struct stream_handler_entry handlers[] = {
 	{ "installed-directly", sw_set_install_directly },
 	{ "install-if-different", sw_set_install_if_different },
 	{ "install-if-higher", sw_set_install_if_higher },
+	{ "install-if-hash-different", sw_set_install_if_hash_different },
 };
 
 static void sw_append_stream(struct img_type *img, const char *key,

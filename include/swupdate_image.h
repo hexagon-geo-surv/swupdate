@@ -63,6 +63,7 @@ struct img_type {
 	char ivt_ascii[33];
 	char aes_ascii[65]; /* AES_256_KEY_LEN*2+1 */
 	bool install_directly;
+	bool install_if_hash_different;
 	int is_script;
 	int is_partitioner;
 	struct dict properties;

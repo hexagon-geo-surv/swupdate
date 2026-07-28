@@ -1533,6 +1533,11 @@ There are 4 main sections inside sw-description:
    |             |          |            | compared with the entries in          |
    |             |          |            | sw-versions                           |
    +-------------+----------+------------+---------------------------------------+
+   | install-if\ | bool     | images     | flag                                  |
+   | -hash-\     |          | (raw only) | if set, the hash of the image on the  |
+   | different   |          |            | board is compared with the hash in    |
+   |             |          |            | sw-description                        |
+   +-------------+----------+------------+---------------------------------------+
    | encrypted   | string   | images     | string to indicate the artefact is    |
    |             |          | files      | encrypted with this cipher.           |
    |             |          | scripts    | e.g 'encrypted = "aes-cbc"'.          |

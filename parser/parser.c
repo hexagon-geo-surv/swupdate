@@ -25,6 +25,7 @@
 #include "parsers.h"
 #include "swupdate_dict.h"
 #include "swupdate_aes.h"
+#include "swupdate_crypto.h"
 #include "lua_util.h"
 
 #define MODULE_NAME	"PARSER"
@@ -403,6 +404,93 @@ static int is_image_higher(struct swver *sw_ver_list,
     return false;
 }
 
+static int is_image_with_same_hash(struct img_type *img)
+{
+	int fdout;
+	void *dgst;	/* use a private context for HASH */
+	uint8_t buffer[16384];
+	ssize_t len;
+	long long nbytes;
+	int ret = 0;
+	/*
+	 * SHA256_HASH_LENGTH should be enough but openssl might write
+	 * up to EVP_MAX_MD_SIZE = 64 bytes (sha512 size)
+	 */
+	unsigned char md_value[64];
+	unsigned int md_len = 0;
+
+	if (!img->install_if_hash_different)
+		return 0;
+
+	/* Rigth now, we only manage type raw */
+	if (strncmp(img->type, "raw", strlen("raw"))) {
+		WARN("install-if-hash-different is set but type %s not supported yet", img->type);
+		return 0;
+	}
+
+	if (!img->size) {
+		WARN("install-if-hash-different is set but size is zero");
+		return 0;
+	}
+
+	if (!IsValidHash(img->sha256)) {
+		WARN("install-if-hash-different is set but hash is zero");
+		return 0;
+	}
+
+	fdout = open(img->device, O_RDONLY);
+	if (fdout < 0)
+		return 0;
+
+	if (lseek(fdout, img->seek, SEEK_SET) < 0) {
+		ERROR("lseek has failed");
+		goto out;
+	}
+
+	dgst = swupdate_HASH_init(SHA_DEFAULT);
+	if (!dgst) {
+		ERROR("Cannot initialize the hash");
+		goto out;
+	}
+
+	nbytes = img->size;
+
+	while (nbytes > 0) {
+		size_t count = sizeof(buffer) < nbytes ? sizeof(buffer) : nbytes;
+		len = read(fdout, buffer, count);
+		if (len < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+
+			ERROR("Failure in stream %d: %s", fdout, strerror(errno));
+			goto out;
+		}
+		if (swupdate_HASH_update(dgst, buffer, len) < 0) {
+			ERROR("Cannot update the hash");
+			goto out;
+		}
+
+		nbytes -= len;
+	}
+
+	if (swupdate_HASH_final(dgst, md_value, &md_len) < 0) {
+		ERROR("Cannot compute final hash");
+		goto out;
+	}
+
+	if (md_len != SHA256_HASH_LENGTH || swupdate_HASH_compare(img->sha256, md_value))
+		goto out;
+
+	TRACE("Found image %s on the device with the same hash => skipping", img->fname);
+	ret = 1;
+
+out:
+	close(fdout);
+
+	return ret;
+}
+
 static void set_img_globals(struct img_type *img, struct swupdate_cfg *sw)
 {
 	img->bootloader = &sw->bootloader;
@@ -519,6 +607,7 @@ static int parse_common_attributes(parsertype p, void *elem, struct img_type *im
 	GET_FIELD_BOOL(p, elem, "preserve-attributes", &image->preserve_attributes);
 	GET_FIELD_BOOL(p, elem, "install-if-different", &image->id.install_if_different);
 	GET_FIELD_BOOL(p, elem, "install-if-higher", &image->id.install_if_higher);
+	GET_FIELD_BOOL(p, elem, "install-if-hash-different", &image->install_if_hash_different);
 
 	if ((encrypted = get_field_string(p, elem, "encrypted")) != NULL) {
 		image->is_encrypted = true;
@@ -537,6 +626,9 @@ static int parse_common_attributes(parsertype p, void *elem, struct img_type *im
 	} else {
 		image->skip = SKIP_NONE;
 	}
+
+	if (is_image_with_same_hash(image))
+		image->skip = SKIP_SAME;
 
 	GET_FIELD_STRING(p, elem, "preinstall", image->lua_fcn_pre);
 	GET_FIELD_STRING(p, elem, "postinstall", image->lua_fcn_post);
