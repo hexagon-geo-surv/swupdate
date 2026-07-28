@@ -182,11 +182,11 @@ static bool get_common_fields(parsertype p, void *cfg, struct swupdate_cfg *swcf
 	}
 
 	GET_FIELD_STRING(p, setting, NULL, swcfg->version);
-	TRACE("Version %s", swcfg->version);
+	INFO("Version %s", swcfg->version);
 
 	if((setting = find_node(p, cfg, "description", swcfg)) != NULL) {
 		GET_FIELD_STRING(p, setting, NULL, swcfg->description);
-		TRACE("Description %s", swcfg->description);
+		INFO("Description %s", swcfg->description);
 	}
 
 	swcfg->update_type_name[0] = '\0';

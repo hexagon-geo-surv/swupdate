@@ -67,7 +67,7 @@ static int read_sw_version_file(struct swupdate_cfg *sw)
 			strlcpy(swcomp->version, version, sizeof(swcomp->version));
 
 			LIST_INSERT_HEAD(&sw->installed_sw_list, swcomp, next);
-			TRACE("Installed %s: Version %s",
+			INFO("Installed %s: Version %s",
 					swcomp->name,
 					swcomp->version);
 			free(name);
