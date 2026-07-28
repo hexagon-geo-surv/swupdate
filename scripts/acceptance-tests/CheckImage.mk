@@ -163,7 +163,7 @@ InvOptsCheckWithWeb: FORCE $(if $(CONFIG_SIGALG_CMS), $(obj)/cacert.pem)
 # webserver integration test – exercises both mongoose and lws backends
 #
 quiet_cmd_websrv_test = RUN     $@
-      cmd_websrv_test = $(srctree)/scripts/acceptance-tests/test_webserver.sh ./swupdate
+      cmd_websrv_test = $(srctree)/scripts/acceptance-tests/test_webserver.sh ./swupdate -l 5 $(if $(CONFIG_SIGALG_CMS),-k $(obj)/cacert.pem --digest-provider opensslCMS)
 
 PHONY += WebserverTest
 WebserverTest: FORCE

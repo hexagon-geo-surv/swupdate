@@ -4,10 +4,10 @@
 #
 # Integration tests for the SWUpdate webserver.
 #
-# Usage: test_webserver.sh [path-to-swupdate] [port]
+# Usage: test_webserver.sh [swupdate call with arguments other than -w]
 
-SWUPDATE="${1:-./swupdate}"
-PORT="${2:-18080}"
+SWUPDATE=$*
+PORT=18080
 BASE_URL="http://127.0.0.1:$PORT"
 DOCROOT=
 SWUPDATE_PID=
@@ -38,7 +38,7 @@ echo "canary" > "$(dirname "$DOCROOT")/passwd"
 FAKE_SWU=$(mktemp --suffix=.swu)
 echo "not a real swu" > "$FAKE_SWU"
 
-"$SWUPDATE" -l 3 -w "-p $PORT -r $DOCROOT" >/dev/null 2>&1 &
+$SWUPDATE -w "-p $PORT -r $DOCROOT" >/dev/null 2>&1 &
 SWUPDATE_PID=$!
 
 # Wait up to 10 s for the server to start accepting connections
