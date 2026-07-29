@@ -37,7 +37,6 @@
 #include "parsers.h"
 #include "network_ipc.h"
 #include "network_interface.h"
-#include "mongoose_interface.h"
 #include "installer.h"
 #include "installer_priv.h"
 #include "progress.h"

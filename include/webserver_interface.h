@@ -10,6 +10,6 @@
 /*
  * This is used by swupdate to start the Webserver
  */
-int start_mongoose(const char *cfgfname, int argc, char *argv[]);
+int start_webserver(const char *cfgfname, int argc, char *argv[]);
 
-void mongoose_print_help(void);
+void webserver_print_help(void);

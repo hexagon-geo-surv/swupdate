@@ -36,7 +36,7 @@
 #include "flash.h"
 #endif
 #include "lua_util.h"
-#include "mongoose_interface.h"
+#include "webserver_interface.h"
 #include "download_interface.h"
 #include "network_ipc.h"
 #include "network_utils.h"
@@ -222,7 +222,7 @@ static void usage(char *programname)
 #ifdef CONFIG_WEBSERVER
 	fprintf(stdout,
 		" -w, --webserver [OPTIONS]      : Parameters to be passed to webserver\n");
-	mongoose_print_help();
+	webserver_print_help();
 #endif
 }
 
@@ -1139,7 +1139,7 @@ int main(int argc, char **argv)
 		read_settings_user_id(&handle, "webserver", &uid, &gid);
 		start_subprocess(SOURCE_WEBSERVER, "webserver", uid, gid,
 				 cfgfname, ac, av,
-				 start_mongoose);
+				 start_webserver);
 		freeargs(av);
 	}
 #endif

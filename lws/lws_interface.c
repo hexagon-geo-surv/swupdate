@@ -31,7 +31,7 @@
 
 #include <libwebsockets.h>
 
-#include "mongoose_interface.h"
+#include "webserver_interface.h"
 #include "network_ipc.h"
 #include "progress.h"
 #include "util.h"
@@ -707,7 +707,7 @@ static struct option long_options[] = {
 	{ NULL, 0, NULL, 0 }
 };
 
-void mongoose_print_help(void)
+void webserver_print_help(void)
 {
 	fprintf(
 		stdout,
@@ -727,7 +727,7 @@ static void signal_handler(int signo) {
 	s_signo = signo;
 }
 
-int start_mongoose(const char *cfgfname, int argc, char *argv[])
+int start_webserver(const char *cfgfname, int argc, char *argv[])
 {
 	struct lws_opts opts = {
 		.port           = LWS_DEFAULT_PORT,
@@ -791,7 +791,7 @@ int start_mongoose(const char *cfgfname, int argc, char *argv[])
 
 	if (optind < argc) {
 		ERROR("Non-option arguments given to lws, see --help.");
-		mongoose_print_help();
+		webserver_print_help();
 		free(opts.document_root);
 #ifdef CONFIG_MONGOOSESSL
 		free(opts.ssl_cert);

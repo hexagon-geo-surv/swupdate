@@ -25,7 +25,7 @@
 #include <getopt.h>
 
 #include <network_ipc.h>
-#include <mongoose_interface.h>
+#include <webserver_interface.h>
 #include <parselib.h>
 #include <progress_ipc.h>
 #include <swupdate_settings.h>
@@ -764,7 +764,7 @@ static struct option long_options[] = {
 	{NULL, 0, NULL, 0}
 };
 
-void mongoose_print_help(void)
+void webserver_print_help(void)
 {
 	fprintf(
 		stdout,
@@ -783,7 +783,7 @@ void mongoose_print_help(void)
 		MG_PORT, MG_ROOT);
 }
 
-int start_mongoose(const char *cfgfname, int argc, char *argv[])
+int start_webserver(const char *cfgfname, int argc, char *argv[])
 {
 	struct mongoose_options opts;
 	struct mg_mgr mgr;
@@ -866,7 +866,7 @@ int start_mongoose(const char *cfgfname, int argc, char *argv[])
 
 	if (optind < argc) {
 		ERROR("Non-option or unrecognized argument(s) given to webserver (-w), see --help.");
-		mongoose_print_help();
+		webserver_print_help();
 		return -EINVAL;
 	}
 

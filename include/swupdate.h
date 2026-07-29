@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include "bsdqueue.h"
 #include "globals.h"
-#include "mongoose_interface.h"
+#include "webserver_interface.h"
 #include "swupdate_dict.h"
 #include "swupdate_image.h"
 #include "hw-compatibility.h"
