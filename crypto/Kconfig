@@ -87,6 +87,19 @@ config CMS_SKIP_UNKNOWN_SIGNERS
 config CMS_IGNORE_ADDITIONAL_CERTS
 	bool "Use only direct signer certificates from CMS signature. This is implied for digest providers other than OpenSSL."
 	depends on SIGALG_CMS && SSL_IMPL_OPENSSL
+
+config CMS_REQUIRE_HYBRID_PQC
+	bool "Require a hybrid (classic + post-quantum) signature"
+	depends on SIGALG_CMS && SSL_IMPL_OPENSSL && !CMS_SKIP_UNKNOWN_SIGNERS
+	help
+	  Reject a verified CMS update unless its signers include at least one
+	  classic (RSA, ECDSA) and at least one post-quantum (ML-DSA, SLH-DSA)
+	  signature. Without this, an attacker can strip one signer from the
+	  unauthenticated SignerInfo set and downgrade a dual-signed update to a
+	  single algorithm.
+
+	  Only holds when every signer is trusted, so it is not compatible with
+	  CMS_SKIP_UNKNOWN_SIGNERS. Requires OpenSSL >= 3.5.
 endmenu
 
 menu "Encryption"

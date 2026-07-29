@@ -462,6 +462,59 @@ dgst_init_error:
 	return ret;
 }
 
+#if defined(CONFIG_CMS_REQUIRE_HYBRID_PQC)
+#if OPENSSL_VERSION_NUMBER < 0x30500000L
+#error "CONFIG_CMS_REQUIRE_HYBRID_PQC requires OpenSSL >= 3.5 (ML-DSA/SLH-DSA support)"
+#endif
+static bool is_pqc_signature_key(EVP_PKEY *pkey)
+{
+	const char *tn = pkey ? EVP_PKEY_get0_type_name(pkey) : NULL;
+
+	return tn && (strncmp(tn, "ML-DSA", 6) == 0 ||
+		      strncmp(tn, "SLH-DSA", 7) == 0);
+}
+
+/*
+ * The signers of a CMS SignedData sit in an unauthenticated SET OF SignerInfo,
+ * so an attacker can strip one and the rest still verify. Require at least one
+ * classic and one post-quantum signer so a dual-signed update cannot be
+ * downgraded to a single algorithm.
+ *
+ * This assumes every signer is trusted, i.e. CMS_verify() runs without
+ * CMS_NO_SIGNER_CERT_VERIFY (CONFIG_CMS_SKIP_UNKNOWN_SIGNERS unset).
+ */
+static int check_hybrid_signers(CMS_ContentInfo *cms)
+{
+	STACK_OF(CMS_SignerInfo) *sinfos = CMS_get0_SignerInfos(cms);
+	int i, classic = 0, pqc = 0;
+
+	for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); ++i) {
+		CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sinfos, i);
+		X509 *signer = NULL;
+
+		/* the signer cert has been resolved by the preceding CMS_verify() */
+		CMS_SignerInfo_get0_algs(si, NULL, &signer, NULL, NULL);
+		if (!signer)
+			continue;
+
+		if (is_pqc_signature_key(X509_get0_pubkey(signer)))
+			pqc++;
+		else
+			classic++;
+	}
+
+	if (classic < 1 || pqc < 1) {
+		ERROR("hybrid policy not satisfied: %d classic + %d post-quantum "
+		      "signer(s), require at least one of each", classic, pqc);
+		return -EBADMSG;
+	}
+
+	TRACE("hybrid policy OK: %d classic + %d post-quantum signer(s)",
+	      classic, pqc);
+	return 0;
+}
+#endif
+
 static int openssl_cms_verify_file(void  *ctx, const char *sigfile,
 		const char *file, const char *signer_name)
 {
@@ -513,6 +566,13 @@ static int openssl_cms_verify_file(void  *ctx, const char *sigfile,
 #if defined(CONFIG_CMS_SKIP_UNKNOWN_SIGNERS) || defined(CONFIG_CMS_IGNORE_ADDITIONAL_CERTS)
 	if (verify_signer_certs(cms, dgst->certs)) {
 		ERROR("Authentication of all signatures failed");
+		status = -EBADMSG;
+		goto out;
+	}
+#endif
+
+#if defined(CONFIG_CMS_REQUIRE_HYBRID_PQC)
+	if (check_hybrid_signers(cms)) {
 		status = -EBADMSG;
 		goto out;
 	}
