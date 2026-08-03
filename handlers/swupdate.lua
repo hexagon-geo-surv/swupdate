@@ -294,8 +294,8 @@ local img_type = {
     -- that SWUpdate can continue with the stream's next artifact after
     -- the Lua Handler returns.
     --
-    --- @param  self      img_type  This `img_type` instance
-    --- @param  callback  function  Callback `function(chunk) ... end` that is fed the current image artifact in chunks.
+    --- @param  self      img_type                   This `img_type` instance
+    --- @param  callback  fun(chunk: string):number  Callback that is fed the image artifact in chunks; return < 0 on error.
     --- @return number              # 0 on success, -1 on error
     --- @return string | nil        # nil on success, error message on failure
     ['read'] = function(self, callback) end,
