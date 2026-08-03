@@ -478,8 +478,9 @@ static int save_stream(int fdin, struct swupdate_cfg *software)
 	 */
 	while (files-- > 0) {
 		len = fill_buffer(fdin, buf, sizeof(struct new_ascii_header));
-		if (len < 0) {
-			ERROR("Reading from file failed, error %d", errno);
+		if (len <= 0) {
+			ERROR("Cannot read CPIO header from stream %d: %s",
+			      fdin, len ? strerror(-len) : "Early EOF");
 			ret = -EFAULT;
 			goto no_copy_output;
 		}

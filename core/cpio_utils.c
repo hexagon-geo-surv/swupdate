@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -78,12 +79,10 @@ static int _fill_buffer(int fd, unsigned char *buf, unsigned int nbytes, unsigne
 			if (errno == EINTR) {
 				continue;
 			}
-
-			ERROR("Failure in stream %d: %s", fd, strerror(errno));
-			return -EFAULT;
+			return -errno;
 		}
 		if (len == 0) {
-			return count;
+			return count > 0 ? -ENODATA : 0;
 		}
 		if (checksum)
 			for (i = 0; i < len; i++)
@@ -258,7 +257,17 @@ static int input_step(void *state, void *buffer, size_t size)
 	case INPUT_FROM_FD:
 		ret = _fill_buffer(s->fdin, buffer, size, s->offs, &s->checksum, s->dgst);
 		if (ret < 0) {
+			ERROR("Error reading %zu bytes from stream %d: %s",
+			      size, s->fdin, strerror(-ret));
 			return ret;
+		}
+		if (ret == 0) {
+			if (s->nbytes > 0) {
+				ERROR("Early EOF in stream %d: %zu bytes missing",
+				      s->fdin, s->nbytes);
+				return -ENODATA;
+			}
+			return 0;
 		}
 		break;
 	case INPUT_FROM_MEMORY:
@@ -824,6 +833,9 @@ int copyfile(struct swupdate_copy *args)
 #endif
 
 	for (;;) {
+		/*
+		 * Note: buffer size is clamped in input_step().
+		 */
 		ret = step(state, buffer, sizeof buffer);
 		if (ret == -EAGAIN) {
 			continue;
@@ -929,8 +941,12 @@ int copyimage(void *out, struct img_type *img, writeimage callback)
 int extract_cpio_header(int fd, struct filehdr *fhdr, unsigned long *offset)
 {
 	unsigned char buf[sizeof(fhdr->filename)];
-	if (_fill_buffer(fd, buf, sizeof(struct new_ascii_header), offset, NULL, NULL) < 0)
+	int ret;
+	if ((ret = _fill_buffer(fd, buf, sizeof(struct new_ascii_header), offset, NULL, NULL)) <= 0) {
+		ERROR("Cannot read CPIO header from stream %d: %s",
+		      fd, ret ? strerror(-ret) : "Early EOF");
 		return -EINVAL;
+	}
 	if (get_cpiohdr(buf, fhdr) < 0) {
 		ERROR("CPIO Header corrupted, cannot be parsed");
 		return -EINVAL;
@@ -943,14 +959,19 @@ int extract_cpio_header(int fd, struct filehdr *fhdr, unsigned long *offset)
 		return -EINVAL;
 	}
 
-	if (_fill_buffer(fd, buf, fhdr->namesize , offset, NULL, NULL) < 0)
+	if ((ret = _fill_buffer(fd, buf, fhdr->namesize , offset, NULL, NULL)) <= 0) {
+		ERROR("Cannot read CPIO filename from stream %d: %s",
+		      fd, ret ? strerror(-ret) : "Early EOF");
 		return -EINVAL;
+	}
 	buf[fhdr->namesize] = '\0';
 	strlcpy(fhdr->filename, (char *)buf, sizeof(fhdr->filename));
 
 	/* Skip filename padding, if any */
-	if (_fill_buffer(fd, buf, (4 - (*offset % 4)) % 4, offset, NULL, NULL) < 0)
+	if ((ret = _fill_buffer(fd, buf, NPAD_BYTES(*offset), offset, NULL, NULL)) < 0) {
+		ERROR("Cannot read padding bytes from stream %d: %s", fd, strerror(-ret));
 		return -EINVAL;
+	}
 
 	return 0;
 }
