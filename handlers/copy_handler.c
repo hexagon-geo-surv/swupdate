@@ -133,7 +133,7 @@ static int copy_single_file(const char *path, off_t skipbytes, ssize_t size, str
 	}
 
 	if (size < 0) {
-		ERROR("Size cannot be detected for %s or it is before offset 0x%lx", path, skipbytes);
+		ERROR("Size cannot be detected for %s or it is before offset 0x%llx", path, skipbytes);
 		close(fdin);
 		return -ENODEV;
 	}
