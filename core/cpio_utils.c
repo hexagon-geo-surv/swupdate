@@ -875,7 +875,7 @@ int copyfile(struct swupdate_copy *args)
 
 	if (!args->inbuf) {
 		ret = _fill_buffer(args->fdin, buffer, NPAD_BYTES(*args->offs),
-				   args->offs, args->checksum, NULL);
+				   args->offs, NULL, NULL);
 		if (ret < 0)
 			DEBUG("Padding bytes are not read, ignoring");
 	}
