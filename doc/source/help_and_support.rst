@@ -15,12 +15,6 @@ There is a mailing list for this project:
 Issue related to the project or to the documentation are discussed
 here.
 
-SWUpdate Flyer
-==============
-
-A short description about the project and the features (in English and German)
-can be found in the `flyer <http://www.denx.de/en/pub/Software/WebHome/we-update.pdf>`_
-
 Workshop and SWUpdate integration in project
 ============================================
 
