@@ -31,7 +31,7 @@ Talks about SWUpdate
        - `Software Update in Embedded Systems by Stefano Babic <https://elinux.org/images/1/19/Babic--software_update_in_embedded_systems.pdf>`_
        - `Updating Embedded Linux devices in field by Chris Simmonds <http://de.slideshare.net/chrissimmonds/linux-fieldupdate2015>`_
        - `OpenEmbedded in the Real World by Scott Murray <https://elinux.org/images/7/74/Murray.pdf>`_
-       - `[RFC] Device-side support for software update in AGL by Matt Porter <https://lists.linuxfoundation.org/pipermail/automotive-discussions/2016-May/002061.html>`_
+       - `[RFC] Device-side support for software update in AGL by Matt Porter <https://drive.google.com/file/d/0B3kuwwmcn4bONFpUQTV1M0NyT1U/view?pli=1&resourcekey=0-QLiM83kau9yRUQGdbJHvIA>`_
        - `Open Source secure software updates for Linux-based IVI systems by Arthur Taylor <https://events.static.linuxfound.org/sites/events/files/slides/Open%20Source%20secure%20software%20updates%20for%20Linux-based%20IVI%20systems.pdf>`_
        - `How do you update your embedded Linux devices? by Daniel Sangorrin / Keijiro Yano <https://events.static.linuxfound.org/sites/events/files/slides/linuxcon-japan-2016-softwre-updates-sangorrin.pdf>`_
        - `Comparison of Linux Software Update Technologies by Matt Porter <https://elinux.org/images/3/31/Comparison_of_Linux_Software_Update_Technologies.pdf>`_
@@ -92,6 +92,4 @@ Useful references
         - `Implement swupdate - replacing opkg based updating, VictronEnergy <https://github.com/victronenergy/venus/issues/27>`_
         - `Variscite, SWUpdate <http://www.variwiki.com/index.php?title=SWUpdate_Guide>`_
         - `Updating Embedded Linux Devices: SWUpdate <http://mkrak.org/2018/01/26/updating-embedded-linux-devices-part2/>`_
-        - `Approach to Software Update Management, Pelux  <https://pelux.io/software-factory/PELUX-3.0/swf-blueprint/docs/articles/architecture/vert-config-SOTA.html>`_
-        - `SOTA System, Pelux  <https://pelux.io/software-factory/PELUX-3.0/chapters/architecture/subsystems/SOTA/SOTA-system.html>`_
         - `Building a Linux system for the STM32MP1: remote firmware updates, Bootlin <https://bootlin.com/blog/tag/swupdate/>`_
