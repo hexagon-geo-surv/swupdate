@@ -500,7 +500,6 @@ void *network_thread (void *data)
 				memset(msg.data.msg, 0, sizeof(msg.data.msg));
 				msg.data.status.current = instp->status;
 				msg.data.status.last_result = instp->last_install;
-				msg.data.status.error = instp->last_error;
 
 				/* Get first notification from the queue */
 				pthread_mutex_lock(&msglock);
@@ -521,7 +520,6 @@ void *network_thread (void *data)
 				memset(msg.data.msg, 0, sizeof(msg.data.msg));
 				msg.data.status.current = instp->status;
 				msg.data.status.last_result = instp->last_install;
-				msg.data.status.error = instp->last_error;
 
 				ret = write(ctrlconnfd, &msg, sizeof(msg));
 				msg.type = NOTIFY_STREAM;
