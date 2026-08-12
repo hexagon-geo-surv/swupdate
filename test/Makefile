@@ -108,7 +108,7 @@ $(obj)/test_verify.o: PREPARE_DATA $(DATADIR)/signature $(DATADIR)/signing-pubke
 
 ifeq ($(CONFIG_SSL_IMPL_OPENSSL),y)
 ifeq ($(CONFIG_SIGALG_CMS),y)
-$(obj)/test_verify.o: $(DATADIR)/signature.cms $(DATADIR)/cms-ca.cert.pem $(DATADIR)/cms-ca.crl.pem $(DATADIR)/cms-ca.crl.der $(DATADIR)/cms-ca.crl.empty.pem
+$(obj)/test_verify.o: $(DATADIR)/signature.cms $(DATADIR)/cms-ca.cert.pem $(DATADIR)/cms-ca.crl.pem $(DATADIR)/cms-ca.crl.der $(DATADIR)/cms-ca.crl.empty.pem $(DATADIR)/signature-chain.cms $(DATADIR)/cms-chain.crl.pem
 endif
 endif
 
@@ -129,11 +129,12 @@ $(DATADIR)/signing-secret.pem:
 
 CMS_TEST_CA_DIR := $(DATADIR)/cms-test-ca
 CMS_TEST_CA_CONFIG := $(CMS_TEST_CA_DIR)/openssl.cnf
+CMS_TEST_INTERMEDIATE_CA_CONFIG := $(CMS_TEST_CA_DIR)/intermediate-openssl.cnf
 
-$(DATADIR)/signature.cms $(DATADIR)/cms-ca.cert.pem $(DATADIR)/cms-ca.crl.pem $(DATADIR)/cms-ca.crl.der $(DATADIR)/cms-ca.crl.empty.pem &: $(DATADIR)/to-be-signed $(CMS_TEST_CA_CONFIG) | PREPARE_DATA
+$(DATADIR)/signature.cms $(DATADIR)/cms-ca.cert.pem $(DATADIR)/cms-ca.crl.pem $(DATADIR)/cms-ca.crl.der $(DATADIR)/cms-ca.crl.empty.pem $(DATADIR)/signature-chain.cms $(DATADIR)/cms-chain.crl.pem &: $(DATADIR)/to-be-signed $(CMS_TEST_CA_CONFIG) $(CMS_TEST_INTERMEDIATE_CA_CONFIG) | PREPARE_DATA
 	$(if $(Q),@echo "  GEN     CMS/CRL test data")
 	$(Q)mkdir -p $(CMS_TEST_CA_DIR)
-	$(Q)find $(CMS_TEST_CA_DIR) -mindepth 1 ! -name openssl.cnf -exec rm -rf {} +
+	$(Q)find $(CMS_TEST_CA_DIR) -mindepth 1 ! -name openssl.cnf ! -name intermediate-openssl.cnf -exec rm -rf {} +
 	$(Q)mkdir -p $(CMS_TEST_CA_DIR)/newcerts
 	$(Q)printf "1000\n" > $(CMS_TEST_CA_DIR)/serial
 	$(Q)printf "1000\n" > $(CMS_TEST_CA_DIR)/crlnumber
@@ -152,14 +153,40 @@ $(DATADIR)/signature.cms $(DATADIR)/cms-ca.cert.pem $(DATADIR)/cms-ca.crl.pem $(
 	$(Q)openssl cms -sign -in $(DATADIR)/to-be-signed -out $(DATADIR)/signature.cms \
 		-signer $(DATADIR)/cms-signer.cert.pem -inkey $(DATADIR)/cms-signer.key.pem \
 		-outform DER -nosmimecap -binary > /dev/null 2>&1
+	$(Q)openssl req -new -newkey rsa:2048 -nodes \
+		-keyout $(DATADIR)/cms-intermediate.key.pem -out $(DATADIR)/cms-intermediate.csr.pem \
+		-subj "/CN=SWUpdate Test Intermediate CA" > /dev/null 2>&1
+	$(Q)openssl ca -batch -config $(CMS_TEST_CA_CONFIG) -extensions intermediate_ca \
+		-in $(DATADIR)/cms-intermediate.csr.pem -out $(DATADIR)/cms-intermediate.cert.pem \
+		-days 365 > /dev/null 2>&1
+	$(Q)mkdir -p $(CMS_TEST_CA_DIR)/intermediate/newcerts
+	$(Q)printf "1000\n" > $(CMS_TEST_CA_DIR)/intermediate/serial
+	$(Q)printf "1000\n" > $(CMS_TEST_CA_DIR)/intermediate/crlnumber
+	$(Q)touch $(CMS_TEST_CA_DIR)/intermediate/index.txt
+	$(Q)openssl req -new -newkey rsa:2048 -nodes \
+		-keyout $(DATADIR)/cms-chain-signer.key.pem -out $(DATADIR)/cms-chain-signer.csr.pem \
+		-subj "/CN=SWUpdate Test Chain Signer" > /dev/null 2>&1
+	$(Q)openssl ca -batch -config $(CMS_TEST_INTERMEDIATE_CA_CONFIG) \
+		-in $(DATADIR)/cms-chain-signer.csr.pem -out $(DATADIR)/cms-chain-signer.cert.pem \
+		-days 365 > /dev/null 2>&1
+	$(Q)openssl cms -sign -in $(DATADIR)/to-be-signed -out $(DATADIR)/signature-chain.cms \
+		-signer $(DATADIR)/cms-chain-signer.cert.pem -inkey $(DATADIR)/cms-chain-signer.key.pem \
+		-certfile $(DATADIR)/cms-intermediate.cert.pem -outform DER -nosmimecap -binary > /dev/null 2>&1
 	$(Q)openssl ca -gencrl -config $(CMS_TEST_CA_CONFIG) \
 		-out $(DATADIR)/cms-ca.crl.empty.pem > /dev/null 2>&1
+	$(Q)openssl ca -gencrl -config $(CMS_TEST_INTERMEDIATE_CA_CONFIG) \
+		-out $(DATADIR)/cms-intermediate.crl.empty.pem > /dev/null 2>&1
 	$(Q)openssl ca -config $(CMS_TEST_CA_CONFIG) \
 		-revoke $(DATADIR)/cms-signer.cert.pem > /dev/null 2>&1
 	$(Q)openssl ca -gencrl -config $(CMS_TEST_CA_CONFIG) \
 		-out $(DATADIR)/cms-ca.crl.pem > /dev/null 2>&1
 	$(Q)openssl crl -in $(DATADIR)/cms-ca.crl.pem -out $(DATADIR)/cms-ca.crl.der \
 		-outform DER > /dev/null 2>&1
+	$(Q)openssl ca -config $(CMS_TEST_CA_CONFIG) \
+		-revoke $(DATADIR)/cms-intermediate.cert.pem > /dev/null 2>&1
+	$(Q)openssl ca -gencrl -config $(CMS_TEST_CA_CONFIG) \
+		-out $(DATADIR)/cms-root.crl.pem > /dev/null 2>&1
+	$(Q)cat $(DATADIR)/cms-root.crl.pem $(DATADIR)/cms-intermediate.crl.empty.pem > $(DATADIR)/cms-chain.crl.pem
 
 ifeq ($(CONFIG_PKCS11),y)
 $(obj)/test_crypt_pkcs11.o: $(DATADIR)/softshm

@@ -112,6 +112,41 @@ static void test_verify_cms_with_nonrevoked_crl(void **state)
 		DATADIR "to-be-signed", NULL);
 	assert_int_equal(error, 0);
 }
+
+static void test_verify_cms_with_revoked_intermediate_crl_default(void **state)
+{
+	int error;
+	struct swupdate_cfg config;
+
+	(void)state;
+
+	memset(&config, 0, sizeof(config));
+	strlcpy(config.crlfname, DATADIR "cms-chain.crl.pem", sizeof(config.crlfname));
+	error = swupdate_dgst_init(&config, DATADIR "cms-ca.cert.pem");
+	assert_int_equal(error, 0);
+
+	error = swupdate_verify_file(config.dgst, DATADIR "signature-chain.cms",
+		DATADIR "to-be-signed", NULL);
+	assert_int_equal(error, 0);
+}
+
+static void test_verify_cms_with_revoked_intermediate_crl_check_all(void **state)
+{
+	int error;
+	struct swupdate_cfg config;
+
+	(void)state;
+
+	memset(&config, 0, sizeof(config));
+	strlcpy(config.crlfname, DATADIR "cms-chain.crl.pem", sizeof(config.crlfname));
+	config.crl_check_all = true;
+	error = swupdate_dgst_init(&config, DATADIR "cms-ca.cert.pem");
+	assert_int_equal(error, 0);
+
+	error = swupdate_verify_file(config.dgst, DATADIR "signature-chain.cms",
+		DATADIR "to-be-signed", NULL);
+	assert_int_not_equal(error, 0);
+}
 #endif
 
 int main(void)
@@ -124,6 +159,8 @@ int main(void)
 		cmocka_unit_test(test_verify_cms_with_revoked_signer_crl),
 		cmocka_unit_test(test_verify_cms_with_revoked_signer_der_crl),
 		cmocka_unit_test(test_verify_cms_with_nonrevoked_crl),
+		cmocka_unit_test(test_verify_cms_with_revoked_intermediate_crl_default),
+		cmocka_unit_test(test_verify_cms_with_revoked_intermediate_crl_check_all),
 #endif
 	};
 	return cmocka_run_group_tests_name("verify", verify_tests, NULL, NULL);
