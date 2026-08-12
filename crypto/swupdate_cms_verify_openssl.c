@@ -164,7 +164,8 @@ static void report_crl_err(unsigned long err, const char *crl_file)
 	ERR_clear_error();
 }
 
-static int add_crl_to_store(X509_STORE *castore, const char *crl_file)
+static int add_crl_to_store(X509_STORE *castore, const char *crl_file,
+			    bool check_all)
 {
 	BIO *fp = BIO_new_file(crl_file, "rb");
 	if (!fp) {
@@ -232,7 +233,12 @@ static int add_crl_to_store(X509_STORE *castore, const char *crl_file)
 		ERR_clear_error();
 	}
 
-	if (!X509_STORE_set_flags(castore, X509_V_FLAG_CRL_CHECK)) {
+	unsigned long crl_flags = X509_V_FLAG_CRL_CHECK;
+
+	if (check_all)
+		crl_flags |= X509_V_FLAG_CRL_CHECK_ALL;
+
+	if (!X509_STORE_set_flags(castore, crl_flags)) {
 		TRACE("Error setting CRL flags");
 		return 0;
 	}
@@ -406,7 +412,8 @@ static int openssl_cms_dgst_init(struct swupdate_cfg *sw, const char *keyfile)
 
 	if (strlen(sw->crlfname)) {
 		TRACE("Loading CRL from %s", sw->crlfname);
-		if (!add_crl_to_store(dgst->certs, sw->crlfname)) {
+		if (!add_crl_to_store(dgst->certs, sw->crlfname,
+					      sw->crl_check_all)) {
 			ERROR("Error loading CRL from %s", sw->crlfname);
 			ret = -EINVAL;
 			goto dgst_init_error;

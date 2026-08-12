@@ -102,6 +102,7 @@ static struct option long_options[] = {
 	{"forced-signer-name", required_argument, NULL, '2'},
 #if defined(CONFIG_SSL_IMPL_OPENSSL)
 	{"crl-path", required_argument, NULL, '9'},
+	{"crl-check-all", no_argument, NULL, 'A'},
 #endif
 #endif
 #ifdef CONFIG_SIGALG_GPG
@@ -178,6 +179,7 @@ static void usage(char *programname)
 		"     --ca-path                  : path to the Certificate Authority (PEM)\n"
 #if defined(CONFIG_SIGALG_CMS) && defined(CONFIG_SSL_IMPL_OPENSSL)
 		"     --crl-path                 : path to the Certificate Revocation List (CRL, PEM or DER)\n"
+		"     --crl-check-all            : check CRLs for the full cert chain (default: signer cert only)\n"
 #endif
 #ifdef CONFIG_SIGALG_GPG
 		" For GnuPG only:\n"
@@ -391,6 +393,8 @@ static int read_globals_settings(void *elem, void *data)
 				"ca-path", sw->publickeyfname);
 	GET_FIELD_STRING(LIBCFG_PARSER, elem,
 				"crl-path", sw->crlfname);
+	GET_FIELD_BOOL(LIBCFG_PARSER, elem,
+				"crl-check-all", &sw->crl_check_all);
 	GET_FIELD_STRING(LIBCFG_PARSER, elem,
 				"aes-key-file", sw->aeskeyfname);
 	GET_FIELD_STRING(LIBCFG_PARSER, elem,
@@ -635,6 +639,9 @@ int main(int argc, char **argv)
 #endif
 #ifdef CONFIG_SIGNED_IMAGES
 	strcat(main_options, "k:");
+#if defined(CONFIG_SIGALG_CMS) && defined(CONFIG_SSL_IMPL_OPENSSL)
+	strcat(main_options, "A");
+#endif
 #endif
 #ifdef CONFIG_ENCRYPTED_IMAGES
 	strcat(main_options, "K:");
@@ -853,6 +860,9 @@ int main(int argc, char **argv)
 			if (optarg) strlcpy(swcfg.crlfname,
 					    optarg,
 					    sizeof(swcfg.crlfname));
+			break;
+		case 'A':
+			swcfg.crl_check_all = true;
 			break;
 #ifdef CONFIG_ENCRYPTED_IMAGES
 		case 'K':

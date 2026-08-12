@@ -325,9 +325,18 @@ For a DER-encoded CRL, pass the binary file directly:
                  --crl-path /etc/swupdate/revocations.der
 
 Revocation is only checked against the signer certificate. Revoking an
-intermediate CA in the trust chain would require the
-``X509_V_FLAG_CRL_CHECK_ALL`` verification flag, which SWUpdate does not
-currently set.
+intermediate CA in the trust chain requires enabling full-chain checking
+with ``X509_V_FLAG_CRL_CHECK_ALL``.
+
+By default, SWUpdate sets only ``X509_V_FLAG_CRL_CHECK``. To enable
+full-chain checks, pass ``--crl-check-all`` (or set
+``crl-check-all = true`` in the ``globals`` section of ``swupdate.cfg``).
+
+::
+
+        swupdate -i image.swu -k /etc/swupdate/ca-chain.pem \
+                 --crl-path /etc/swupdate/revocations.pem \
+                 --crl-check-all
 
 For GPG signing, CONFIG_SIGALG_GPG needs to be enabled. The GPG key will
 need to be imported to the device's GnuPG home directory. To do this, the
