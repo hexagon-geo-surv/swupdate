@@ -46,6 +46,17 @@ static void test_verify_pkcs15(void **state)
 }
 
 #if defined(CONFIG_SIGALG_CMS) && defined(CONFIG_SSL_IMPL_OPENSSL)
+/*
+ * mimic --digest-provider opensslCMS selection for CMS tests, otherwise
+ * opensslRSA is selected
+ */
+static void select_cms_provider(struct swupdate_cfg *config)
+{
+	strlcpy(config->digest_provider, "opensslCMS",
+		sizeof(config->digest_provider));
+	assert_int_equal(set_dgstlib(config->digest_provider), 0);
+}
+
 static void test_verify_cms_without_crl(void **state)
 {
 	int error;
@@ -54,6 +65,7 @@ static void test_verify_cms_without_crl(void **state)
 	(void)state;
 
 	memset(&config, 0, sizeof(config));
+	select_cms_provider(&config);
 	error = swupdate_dgst_init(&config, DATADIR "cms-ca.cert.pem");
 	assert_int_equal(error, 0);
 
@@ -71,6 +83,7 @@ static void test_verify_cms_with_revoked_signer_crl(void **state)
 
 	memset(&config, 0, sizeof(config));
 	strlcpy(config.crlfname, DATADIR "cms-ca.crl.pem", sizeof(config.crlfname));
+	select_cms_provider(&config);
 	error = swupdate_dgst_init(&config, DATADIR "cms-ca.cert.pem");
 	assert_int_equal(error, 0);
 
@@ -88,6 +101,7 @@ static void test_verify_cms_with_revoked_signer_der_crl(void **state)
 
 	memset(&config, 0, sizeof(config));
 	strlcpy(config.crlfname, DATADIR "cms-ca.crl.der", sizeof(config.crlfname));
+	select_cms_provider(&config);
 	error = swupdate_dgst_init(&config, DATADIR "cms-ca.cert.pem");
 	assert_int_equal(error, 0);
 
@@ -105,6 +119,7 @@ static void test_verify_cms_with_nonrevoked_crl(void **state)
 
 	memset(&config, 0, sizeof(config));
 	strlcpy(config.crlfname, DATADIR "cms-ca.crl.empty.pem", sizeof(config.crlfname));
+	select_cms_provider(&config);
 	error = swupdate_dgst_init(&config, DATADIR "cms-ca.cert.pem");
 	assert_int_equal(error, 0);
 
@@ -122,6 +137,7 @@ static void test_verify_cms_with_revoked_intermediate_crl_default(void **state)
 
 	memset(&config, 0, sizeof(config));
 	strlcpy(config.crlfname, DATADIR "cms-chain.crl.pem", sizeof(config.crlfname));
+	select_cms_provider(&config);
 	error = swupdate_dgst_init(&config, DATADIR "cms-ca.cert.pem");
 	assert_int_equal(error, 0);
 
@@ -139,6 +155,7 @@ static void test_verify_cms_with_revoked_intermediate_crl_check_all(void **state
 
 	memset(&config, 0, sizeof(config));
 	strlcpy(config.crlfname, DATADIR "cms-chain.crl.pem", sizeof(config.crlfname));
+	select_cms_provider(&config);
 	config.crl_check_all = true;
 	error = swupdate_dgst_init(&config, DATADIR "cms-ca.cert.pem");
 	assert_int_equal(error, 0);
