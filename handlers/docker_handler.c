@@ -328,7 +328,7 @@ static void docker_container_start_handler(void)
 __attribute__((constructor))
 static void docker_container_stop_handler(void)
 {
-	register_handler("docker_containerstart", container_stop,
+	register_handler("docker_containerstop", container_stop,
 				SCRIPT_HANDLER | NO_DATA_HANDLER, NULL);
 }
 
