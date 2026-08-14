@@ -43,6 +43,16 @@ struct progress_conn {
 SIMPLEQ_HEAD(connections, progress_conn);
 
 /*
+ * Collect errors during an update session
+ */
+struct update_error {
+	SIMPLEQ_ENTRY(update_error) next;
+	char *strerr;
+};
+
+SIMPLEQ_HEAD(errors_list, update_error);
+
+/*
  * Structure contains data regarding
  * current installation
  */
@@ -51,10 +61,87 @@ struct swupdate_progress {
 	char *current_image;
 	const handler *curhnd;
 	struct connections conns;
+	struct errors_list errs;
 	pthread_mutex_t lock;
 	bool step_running;
 };
 static struct swupdate_progress progress;
+
+/*
+ * This must be called after acquiring the mutex
+ * for the progress structure
+ */
+static void clean_errlist(void) {
+	struct update_error *err;
+	struct update_error *err_tmp;
+	SIMPLEQ_FOREACH_SAFE(err, &progress.errs, next, err_tmp) {
+		free(err->strerr);
+		SIMPLEQ_REMOVE(&progress.errs, err, update_error, next);
+		free(err);
+	}
+}
+
+/*
+ * This must be called after acquiring the mutex
+ * for the progress structure
+ */
+static void insert_errmsg(const char *msg) {
+	struct update_error *err = (struct update_error *)calloc(1, sizeof(*err));
+
+	/*
+	 * in case of error, silent quit. OOM will be raised
+	 * during update and avoid circular dependencies
+	 */
+	if (!err)
+		return;
+
+	err->strerr = strdup(msg);
+	if (!err->strerr) {
+		free(err);
+		return;
+	}
+
+	SIMPLEQ_INSERT_TAIL(&progress.errs, err, next);
+}
+
+/*
+ * This must be called after acquiring the mutex
+ * for the progress structure
+ */
+static void create_json_with_errors(void)
+{
+	struct swupdate_progress *pprog = &progress;
+	struct update_error *err;
+	struct update_error *err_tmp;
+	unsigned int len = 0;
+	unsigned int available = sizeof(pprog->msg.info) - strlen("[]");
+	bool first = true;
+	char *buf = pprog->msg.info;
+
+	SIMPLEQ_FOREACH_SAFE(err, &progress.errs, next, err_tmp) {
+		/*
+		 * Do not truncate in the buffer, check in advance if string
+		 * can be copied
+		 */
+
+		if (err->strerr && (available - strlen(err->strerr) - 3) > 0) {
+			const char *format;
+			if (first) {
+				format = "{ \"errors\": [\"%s\"";
+				first = false;
+			} else
+				format = ",\"%s\"";
+
+			len = snprintf(buf, available -3, format, err->strerr);
+			available -= len;
+			buf += len;
+		}
+	}
+	*buf++ = ']';
+	*buf++ = '}';
+	*buf++ = '\0';
+	pprog->msg.infolen = strlen(pprog->msg.info);
+}
 
 /*
  * This must be called after acquiring the mutex
@@ -137,6 +224,7 @@ void swupdate_progress_init(unsigned int nsteps) {
 	pprog->msg.infolen = get_install_info(pprog->msg.info,
 						sizeof(pprog->msg.info));
 	pprog->msg.source = get_install_source();
+	clean_errlist();
 	send_progress_msg();
 	/* Info is just an event, reset it after sending */
 	pprog->msg.infolen = 0;
@@ -159,6 +247,14 @@ void swupdate_progress_update(unsigned int perc)
 		pprog->msg.cur_percent = perc;
 		send_progress_msg();
 	}
+	pthread_mutex_unlock(&pprog->lock);
+}
+
+void swupdate_progress_store_err(const char *error_msg)
+{
+	struct swupdate_progress *pprog = &progress;
+	pthread_mutex_lock(&pprog->lock);
+	insert_errmsg(error_msg);
 	pthread_mutex_unlock(&pprog->lock);
 }
 
@@ -211,15 +307,22 @@ void swupdate_progress_step_completed(void)
 void swupdate_progress_end(RECOVERY_STATUS status)
 {
 	struct swupdate_progress *pprog = &progress;
+
 	pthread_mutex_lock(&pprog->lock);
 	pprog->step_running = false;
 	pprog->msg.status = status;
+
+	if (status == FAILURE)
+		create_json_with_errors();
+
 	send_progress_msg();
 	pprog->msg.nsteps = 0;
 	pprog->msg.cur_step = 0;
 	pprog->msg.cur_percent = 0;
 	pprog->msg.dwl_percent = 0;
 	pprog->msg.dwl_bytes = 0;
+
+	clean_errlist();
 
 	pthread_mutex_unlock(&pprog->lock);
 }
@@ -304,6 +407,7 @@ void *progress_bar_thread (void __attribute__ ((__unused__)) *data)
 
 	pthread_mutex_init(&pprog->lock, NULL);
 	SIMPLEQ_INIT(&pprog->conns);
+	SIMPLEQ_INIT(&pprog->errs);
 
 	/* Initialize and bind to UDS */
 	listen = listener_create(get_prog_socket(), SOCK_STREAM);

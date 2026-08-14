@@ -335,7 +335,7 @@ static void process_notifier (RECOVERY_STATUS status, int event, int level, cons
 
 	/* Check just in case a process want to send an info outside */
 	if (status != SUBPROCESS)
-	       return;
+		return;
 
 	switch (event) {
 	case (CANCELUPDATE):
@@ -357,7 +357,11 @@ static void progress_notifier (RECOVERY_STATUS status, int event, int level, con
 	unsigned long long dwl_bytes = 0;
 	(void)level;
 
-	/* Check just in case a process want to send an info outside */
+	if (level == ERRORLEVEL) {
+		swupdate_progress_store_err(msg);
+		return;
+	}
+
 	if (status != PROGRESS)
 	       return;
 
@@ -369,7 +373,6 @@ static void progress_notifier (RECOVERY_STATUS status, int event, int level, con
 
 	swupdate_progress_info(status, event, msg);
 }
-
 
 #if defined(__FreeBSD__)
 static char* socket_path = NULL;
