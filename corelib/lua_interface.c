@@ -634,15 +634,6 @@ static void update_table(lua_State* L, struct img_type *img)
 	}
 }
 
-#if LUA_VERSION_NUM > 501
-static int l_istream_fclose(lua_State *L)
-{
-	/* closing istream is not allowed, ignore it. */
-	lua_pushboolean(L, true);
-	return 1;
-}
-#endif
-
 static void image2table(lua_State* L, struct img_type *img)
 {
 	if (L && img) {
@@ -670,18 +661,17 @@ static void image2table(lua_State* L, struct img_type *img)
 		update_table(L, img);
 
 		if (is_type(L, LUA_TYPE_HANDLER)) {
-			lua_getfield(L, -1, "_private");
-			lua_pushstring(L, "istream");
-			luaL_Stream *lstream = (luaL_Stream *)lua_newuserdata(L, sizeof(luaL_Stream));
-			luaL_getmetatable(L, LUA_FILEHANDLE);
-			lua_setmetatable(L, -2);
-#if LUA_VERSION_NUM > 501
-			lstream->closef = l_istream_fclose;
-#endif
-			lstream->f = fdopen(img->fdin, "r");
-			if (lstream->f == NULL) {
-				WARN("Cannot fdopen file descriptor %d: %s", img->fdin, strerror(errno));
+			int fdin = img->fdin;
+			if (fdin < 0)
+				errno = EBADF;
+			if (fdin < 0 || fcntl(fdin, F_GETFD) == -1) {
+				WARN("Invalid input file descriptor %d: %s", fdin, strerror(errno));
+				fdin = -1;
 			}
+
+			lua_getfield(L, -1, "_private");
+			lua_pushstring(L, "istream_fd");
+			lua_pushinteger(L, (lua_Integer)fdin);
 			lua_settable(L, -3);
 			lua_pop(L, 1);
 		}
@@ -720,13 +710,8 @@ static void table2image(lua_State* L, struct img_type *img) {
 		img->offset = (off_t)luaL_checknumber(L, -1);
 		if (is_type(L, LUA_TYPE_HANDLER)) {
 			lua_pop(L, 1);
-			lua_getfield(L, -1, "istream");
-			luaL_Stream *lstream = ((luaL_Stream *)luaL_checkudata(L, -1, LUA_FILEHANDLE));
-			if (lstream->f == NULL) {
-				img->fdin = -1;
-			} else {
-				img->fdin = fileno(lstream->f);
-			}
+			lua_getfield(L, -1, "istream_fd");
+			img->fdin = (int)luaL_optinteger(L, -1, -1);
 		}
 		lua_pop(L,2);
 	}

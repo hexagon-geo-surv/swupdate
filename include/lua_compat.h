@@ -22,15 +22,6 @@ void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
 void luaL_requiref(lua_State *L, char const* modname, lua_CFunction openf, int glb);
 
 
-/*
- * See https://github.com/keplerproject/lua-compat-5.3/wiki/luaL_Stream
- * on the reason for the absence of luaL_Stream's closef member and
- * compatibility with LuaJIT / Lua 5.1.
- */
-typedef struct luaL_Stream {
-  FILE *f;
-} luaL_Stream;
-
 typedef struct luaL_Buffer_52 {
 	luaL_Buffer b; /* make incorrect code crash! */
 	char *ptr;
