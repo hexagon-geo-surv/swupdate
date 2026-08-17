@@ -307,10 +307,11 @@ A run of SWUpdate consists mainly of the following steps:
 - runs the pre update command, if set
 - runs partition handlers, if required.
 - reads through the cpio archive one file at a time and either:
-        * execute handlers for each file marked as "installed-directly".
-          checksum is checked while the data is streamed to handler, and copy will
-          be marked as having failed if checksum was not correct failing the rest
-          of the install.
+        * execute handlers directly consuming the data stream for each
+          file marked as "installed-directly".
+          Note that in this case a cpio checksum is not verified while
+          a sha256 checksum (``CONFIG_HASH_VERIFY``) is if the file has
+          it set in ``sw-description`` or when signed images are used.
         * copy other files to a temporary location while checking checksums,
           stopping if there was a mismatch.
 - iterates through all `scripts` and call the corresponding
@@ -808,7 +809,11 @@ well-established, and streamable format. More specifically, the
 *New CRC* format (header magic number ``070702``) are supported.
 Both formats are essentially equivalent with the New CRC format additionally
 having set the cpio header field ``check`` to the least-significant 32 bits of
-the sum of all (unsigned) data bytes. This checksum is verified by SWUpdate.
+the sum of all (unsigned) data bytes. This checksum is verified by SWUpdate
+for artifacts copied to a temporary location as well as for skipped
+artifacts. It is not verified for artifacts marked ``installed-directly``,
+which are directly streamed to their handler -- use sha256 verification
+(``CONFIG_HASH_VERIFY``) for ensuring the integrity of those.
 If this verification fails, SWUpdate yields an error like the following:
 
 ::
@@ -817,7 +822,8 @@ If this verification fails, SWUpdate yields an error like the following:
 
 Note that there's artifact sha256 verification available
 (see ``CONFIG_HASH_VERIFY``) which is recommended over relying
-on cpio's checksum facility.
+on cpio's checksum facility, in particular for artifacts marked
+``installed-directly`` for which cpio checksums are not verified.
 
 For both cpio formats, the New ASCII as well as the New CRC format, the
 cpio file size is limited to 32 Bit, i.e., 4 GB.

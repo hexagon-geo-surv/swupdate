@@ -271,7 +271,7 @@ swupdate.register_handler = function(name, funcptr, mask) end
 --- @field preserve_attributes   boolean   Whether to preserve attributes in archives
 --- @field offset                number    Offset to seek to in artifact
 --- @field size                  number    Artifact size
---- @field checksum              number    Computed checksum
+--- @field checksum              number    Computed checksum, read-only
 --- @field skip                  number    `skip_t` enum number as in `include/swupdate.h`
 --- @field compressed            string    `zlib`, `xz`, `zstd` or `lz4` (boolean value is deprecated)
 --- @field properties            table     Properties Table equivalent as specified in `sw-description`

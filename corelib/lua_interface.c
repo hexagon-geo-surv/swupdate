@@ -397,13 +397,11 @@ static void lua_bool_to_img(struct img_type *img, const char *key,
 
 DEFINE_IMG_NUMBER_SETTER(lua_set_offset_number, seek, unsigned long long)
 DEFINE_IMG_NUMBER_SETTER(lua_set_size, size, long long)
-DEFINE_IMG_NUMBER_SETTER(lua_set_checksum, checksum, unsigned int)
 DEFINE_IMG_NUMBER_SETTER(lua_set_skip, skip, unsigned int)
 
 static const struct lua_img_number_handler_entry lua_number_handlers[] = {
 	{ "offset", lua_set_offset_number },
 	{ "size", lua_set_size },
-	{ "checksum", lua_set_checksum },
 	{ "skip", lua_set_skip },
 };
 
@@ -435,7 +433,6 @@ static int l_copy2file(lua_State *L)
 	}
 
 	struct img_type img = {};
-	uint32_t image_checksum = img.checksum;
 
 	table2image(L, &img);
 	if (check_same_file(img.fdin, fdout)) {
@@ -453,13 +450,6 @@ static int l_copy2file(lua_State *L)
 		lua_pushstring(L, strerror(errno));
 		goto copyfile_exit;
 	}
-	if ((image_checksum != 0) && (image_checksum != img.checksum)) {
-		lua_pushinteger(L, -1);
-		lua_pushfstring(L, "Checksums WRONG! Computed 0x%d, should be 0x%d\n",
-				img.checksum, image_checksum);
-		goto copyfile_exit;
-	}
-
 	lua_pushinteger(L, 0);
 	lua_pushnil(L);
 
@@ -511,7 +501,6 @@ static int l_istream_read(lua_State* L)
 	luaL_checktype(L, 2, LUA_TFUNCTION);
 
 	struct img_type img = {};
-	uint32_t image_checksum = img.checksum;
 
 	lua_pushvalue(L, 1);
 	table2image(L, &img);
@@ -526,12 +515,6 @@ static int l_istream_read(lua_State* L)
 	if (ret < 0) {
 		lua_pushinteger(L, -1);
 		lua_pushstring(L, strerror(errno));
-		return 2;
-	}
-	if ((image_checksum != 0) && (image_checksum != img.checksum)) {
-		lua_pushinteger(L, -1);
-		lua_pushfstring(L, "Checksums WRONG! Computed 0x%d, should be 0x%d\n",
-				img.checksum, image_checksum);
 		return 2;
 	}
 	lua_pushinteger(L, 0);
