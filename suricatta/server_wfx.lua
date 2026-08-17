@@ -211,8 +211,7 @@ end
 --- @param  tbl  table  Table to test for emptiness
 --- @return boolean     # `true` if empty, `false` if not
 function M.utils.table.is_empty(tbl)
-    local index, _ = next(tbl)
-    return not index and true or false
+    return not next(tbl)
 end
 
 --- Enquote a String array's elements.
