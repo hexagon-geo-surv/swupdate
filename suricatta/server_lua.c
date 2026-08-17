@@ -19,6 +19,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 #include <lua_util.h>
+#include <lua_compat.h>
 
 #include <json-c/json_visit.h>
 
