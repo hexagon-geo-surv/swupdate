@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2013 Stefano Babic <stefano.babic@swupdate.org>
+
+SPDX-License-Identifier: GPL-2.0-only
+-->
+
 # Security Policy
 
 Security is taken very seriously inside SWUpdate. If you think you have found a security vulnerability, please read the next sections and follow the instructions to report your finding.
